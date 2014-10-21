@@ -9,8 +9,9 @@
  *
  *  @package    PHP-PayPal-IPN
  *  @author     Micah Carrick
+ *  @author     Sebastian Sibelle
  *  @copyright  (c) 2012 - Micah Carrick
- *  @version    2.1.0
+ *  @version    2.1.1
  */
 class IpnListener {
     
@@ -22,13 +23,6 @@ class IpnListener {
      */
     public $use_curl = true;     
     
-    /**
-     *  If true, explicitly sets cURL to use SSL version 3. Use this if cURL
-     *  is compiled with GnuTLS SSL.
-     *
-     *  @var boolean
-     */
-    public $force_ssl_v3 = true;     
    
     /**
      *  If true, cURL will use the CURLOPT_FOLLOWLOCATION to follow any 
@@ -93,21 +87,20 @@ class IpnListener {
         
         $ch = curl_init();
 
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-		curl_setopt($ch, CURLOPT_CAINFO, 
-		            dirname(__FILE__)."/cert/api_cert_chain.crt");
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        curl_setopt($ch, CURLOPT_CAINFO, 
+        dirname(__FILE__)."/cert/api_cert_chain.crt");
         curl_setopt($ch, CURLOPT_URL, $uri);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $encoded_data);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, $this->follow_location);
+        
         curl_setopt($ch, CURLOPT_TIMEOUT, $this->timeout);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HEADER, true);
-        
-        if ($this->force_ssl_v3) {
-            curl_setopt($ch, CURLOPT_SSLVERSION, 3);
-        }
+        // You should know that Paypal does not work with SSLv3
+        // https://github.com/paypal/rest-api-sdk-php/commit/8e193664151578a0eeeca1129c9f3203951ac15a
+        curl_setopt($ch, CURLOPT_SSLVERSION, 1);
         
         $this->response = curl_exec($ch);
         $this->response_status = strval(curl_getinfo($ch, CURLINFO_HTTP_CODE));
